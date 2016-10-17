@@ -115,6 +115,21 @@ void userAnt(chanend fromButtons, chanend toVisualiser, chanend toController) {
   toVisualiser <: userAntPosition;         //show initial position
   while (1) {
     fromButtons :> buttonInput; //expect values 13 and 14
+    if(buttonInput == 13){
+        if(userAntPosition == 0){
+            attemptedAntPosition = 22;
+        }else{
+        attemptedAntPosition = userAntPosition - 1;
+        }
+    }else{
+        attemptedAntPosition = (userAntPosition+1)%23;
+    }
+    toController <: userAntPosition;
+    toController :> moveForbidden;
+    if(moveForbidden){
+    }else{
+        userAntPosition = attemptedAntPosition;
+    }
     ////////////////////////////////////////////////////////////
     //
     // !!! place code here for userAnt behaviour
@@ -136,12 +151,31 @@ void attackerAnt(chanend toVisualiser, chanend toController) {
   toVisualiser <: attackerAntPosition;       //show initial position
 
   while (running) {
+      if(moveCounter % 31 || moveCounter %37){
+          currentDirection = (currentDirection + 1) % 2;
+      }
+      if(currentDirection){
+          attemptedAntPosition = (attackerAntPosition + 1)%23;
+      }else{
+          if(attackerAntPosition == 0){
+              attemptedAntPosition = 22;
+          }else{
+              attemptedAntPosition = attackerAntPosition - 1;
+          }
+      }
+      moveCounter++;
+      toController <: attemptedAntPosition;
+      toController :> moveForbidden;
+      if(moveForbidden){
+          currentDirection = (currentDirection + 1)%2;
+      }else{
+          attackerAntPosition = attemptedAntPosition;
+      }
   ////////////////////////////////////////////////////////////
   //
   // !!! place your code here for attacker behaviour
   //
   /////////////////////////////////////////////////////////////
-      attackerAntPosition++;
   toVisualiser <: attackerAntPosition;
   waitMoment();
   }
@@ -160,6 +194,15 @@ void controller(chanend fromAttacker, chanend fromUser) {
   while (!gameEnded) {
     select {
       case fromAttacker :> attempt:
+          if(attempt == lastReportedUserAntPosition){
+             fromAttacker <: 1;
+          }else{
+              lastReportedAttackerAntPosition = attempt;
+              fromAttacker <: 0;
+              if(7 < lastReportedAttackerAntPosition < 15){
+                  gameEnded = 1;
+              }
+          }
       /////////////////////////////////////////////////////////////
       //
       // !!! place your code here to give permission/deny attacker move or to end game
@@ -167,6 +210,12 @@ void controller(chanend fromAttacker, chanend fromUser) {
       /////////////////////////////////////////////////////////////
         break;
       case fromUser :> attempt:
+          if(attempt == lastReportedAttackerAntPosition){
+              fromUser <: 1;
+          }else{
+              lastReportedUserAntPosition = attempt;
+              fromUser <: 0;
+          }
       /////////////////////////////////////////////////////////////
       //
       // !!! place your code here to give permission/deny user move
@@ -175,6 +224,8 @@ void controller(chanend fromAttacker, chanend fromUser) {
         break;
     }
   }
+  printf("Game Over Man =|=");
+
 }
 
 //MAIN PROCESS defining channels, orchestrating and starting the processes
