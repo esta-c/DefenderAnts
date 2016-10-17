@@ -124,7 +124,7 @@ void userAnt(chanend fromButtons, chanend toVisualiser, chanend toController) {
     }else{
         attemptedAntPosition = (userAntPosition+1)%23;
     }
-    toController <: userAntPosition;
+    toController <: attemptedAntPosition;
     toController :> moveForbidden;
     if(moveForbidden){
     }else{
@@ -151,7 +151,7 @@ void attackerAnt(chanend toVisualiser, chanend toController) {
   toVisualiser <: attackerAntPosition;       //show initial position
 
   while (running) {
-      if(moveCounter % 31 || moveCounter %37){
+      if((moveCounter %31 == 0) || (moveCounter %37 == 0)){
           currentDirection = (currentDirection + 1) % 2;
       }
       if(currentDirection){
@@ -186,7 +186,7 @@ void attackerAnt(chanend toVisualiser, chanend toController) {
 //                      has moved to winning positions.
 void controller(chanend fromAttacker, chanend fromUser) {
   unsigned int lastReportedUserAntPosition = 11;      //position last reported by userAnt
-  unsigned int lastReportedAttackerAntPosition = 5;   //position last reported by attackerAnt
+  unsigned int lastReportedAttackerAntPosition = 2;   //position last reported by attackerAnt
   unsigned int attempt = 0;                           //incoming data from ants
   int gameEnded = 0;                                  //indicates if game is over
   fromUser :> attempt;                                //start game when user moves
@@ -195,13 +195,11 @@ void controller(chanend fromAttacker, chanend fromUser) {
     select {
       case fromAttacker :> attempt:
           if(attempt == lastReportedUserAntPosition){
-             fromAttacker <: 1;
+              fromAttacker <: 1;
           }else{
               lastReportedAttackerAntPosition = attempt;
               fromAttacker <: 0;
-              if(7 < lastReportedAttackerAntPosition < 15){
-                  gameEnded = 1;
-              }
+              if((lastReportedAttackerAntPosition > 7) && (lastReportedAttackerAntPosition<15))gameEnded = 1;
           }
       /////////////////////////////////////////////////////////////
       //
@@ -214,6 +212,7 @@ void controller(chanend fromAttacker, chanend fromUser) {
               fromUser <: 1;
           }else{
               lastReportedUserAntPosition = attempt;
+              //printf("%d user pos \n",lastReportedUserAntPosition);
               fromUser <: 0;
           }
       /////////////////////////////////////////////////////////////
@@ -224,7 +223,7 @@ void controller(chanend fromAttacker, chanend fromUser) {
         break;
     }
   }
-  printf("Game Over Man =|=");
+  printstr("Game Over Man =|= \n");
 
 }
 
